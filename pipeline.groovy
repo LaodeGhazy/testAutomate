@@ -11,6 +11,7 @@ pipeline {
         }
         stage('Periksa Status Aplikasi') {
             steps {
+            	sh 'ls -l ./check_app_status.sh'
                 sh './check_app_status.sh' // Pastikan path dan permission execute sudah benar
             }
             post {
