@@ -40,14 +40,12 @@ pipeline {
                 success {
                     script {
                         // Email notifikasi (opsional) - Contoh menggunakan 'emailext' plugin
-                        emailext (
-                            subject: "Jenkins Build Berhasil",
-                            body: """
-                                Build Jenkins Anda berhasil.
-                                Stage: Periksa Status Aplikasi
-                                """,
-                            recipientProviders: [[$class: 'DevelopersRecipientProvider']]
-                        )
+           emailext (
+    subject: "Jenkins Build Berhasil",
+    body: "Build Jenkins Anda berhasil.",
+    to: "recipient@example.com"
+)
+
                     }
                 }
             }
