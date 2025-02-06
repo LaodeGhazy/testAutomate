@@ -1,7 +1,8 @@
 pipeline {
     agent any
     environment {
-        IMAGE_NAME = "my-web-app" // Ganti dengan nama image Docker Anda yang sesuai
+        CONTAINER_NAME = "angry_mayer" // Nama container dari hasil docker ps
+        IMAGE_NAME = "my-web-app" // Ganti dengan nama image yang sesuai
     }
     stages {
         stage('Checkout Code') {
@@ -11,60 +12,44 @@ pipeline {
         }
         stage('Periksa Status Aplikasi') {
             steps {
-                // Menampilkan file check_app_status.sh untuk memastikan path dan permission benar
                 sh 'ls -l ./check_app_status.sh'
-                
-                // Menjalankan script untuk memeriksa status aplikasi
-                sh './check_app_status.sh' // Pastikan file ini ada dan bisa dijalankan
+                sh './check_app_status.sh' // Pastikan path dan permission execute sudah benar
             }
             post {
                 failure {
                     script {
                         sshagent(credentials: ['server_aplikasi_ssh']) {
-                            // Debugging dengan set -x untuk melacak perintah yang dijalankan
+                            // Cek apakah container sedang berjalan atau tidak
                             sh """
-                                set -x
-                                
-                                // Mengecek apakah container berdasarkan image sudah berjalan
-                                if ! docker ps -a --filter ancestor=${IMAGE_NAME} --filter status=running | grep ${IMAGE_NAME}; then
+                                if ! docker ps --filter name=${CONTAINER_NAME} --filter status=running | grep ${CONTAINER_NAME}; then
                                     echo "Container tidak berjalan, mencoba untuk memulai ulang..."
-                                    // Menghapus container lama yang sudah mati jika ada
-                                    docker ps -q --filter ancestor=${IMAGE_NAME} --filter status=exited | xargs docker rm
-                                    // Menjalankan container baru
-                                    docker run -d -p 5000:5000 ${IMAGE_NAME}
+                                    docker run -d -p 5000:5000 ${IMAGE_NAME} // Memulai container baru jika container tidak berjalan
                                 else
                                     echo "Container sudah berjalan, mencoba untuk merestart..."
-                                    // Menghentikan dan menghapus container yang sedang berjalan
-                                    docker ps -q --filter ancestor=${IMAGE_NAME} --filter status=running | xargs docker stop
-                                    docker ps -q --filter ancestor=${IMAGE_NAME} --filter status=running | xargs docker rm
-                                    // Menjalankan ulang container
-                                    docker run -d -p 5000:5000 ${IMAGE_NAME}
+                                    docker restart ${CONTAINER_NAME} // Merestart container yang ada
                                 fi
-                                
-                                // Menampilkan log untuk debugging lebih lanjut
-                                docker logs \$(docker ps -q --filter ancestor=${IMAGE_NAME} --filter status=running)
                             """
-                            
-                            // Mengirim notifikasi email jika build gagal
+                            // Email notifikasi (opsional) - Notifikasi jika build gagal
                             emailext (
                                 subject: "Jenkins Build Gagal",
                                 body: """
                                     Build Jenkins Anda gagal.
                                     Stage: Periksa Status Aplikasi
                                     Status Code: ${env.STATUS_CODE}
-                                    Detail: Build gagal pada tahap pengecekan aplikasi.
+                                    Detail: ... (tambahkan detail lain yang relevan)
                                 """,
                                 recipientProviders: [[$class: 'DevelopersRecipientProvider']]
+
                             )
                         }
                     }
                 }
                 success {
                     script {
-                        // Mengirim notifikasi email jika build berhasil
+                        // Email notifikasi (opsional) - Notifikasi jika build berhasil
                         emailext (
                             subject: "Jenkins Build Berhasil",
-                            body: "Build Jenkins Anda berhasil dan aplikasi berjalan normal.",
+                            body: "Build Jenkins Anda berhasil.",
                             to: "ghazylaode002@gmail.com"
                         )
                     }
