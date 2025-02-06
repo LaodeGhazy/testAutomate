@@ -19,15 +19,9 @@ pipeline {
                     script {
                         sshagent(credentials: ['server_aplikasi_ssh']) {
                             // Perbaikan: Gunakan variabel dengan ${} dan pastikan container ada
-                            sh """
-                                if ! docker ps --filter name=${dreamy_shockley} --filter status=running | grep ${dreamy_shockley}; then
-                                    echo "Container tidak berjalan, mencoba untuk memulai ulang..."
-                                    docker start ${dreamy_shockley}
-                                else
-                                    echo "Container sudah berjalan, mencoba untuk merestart..."
-                                    docker restart ${dreamy_shockley}
-                                fi
-                            """
+                            sh "docker ps | grep ${dreamy_shockley} && docker restart ${dreamy_shockley}"
+                            // Atau, gunakan ID container jika lebih reliable:
+                            // sh "docker restart $(docker ps -q --filter name=${CONTAINER_NAME})"
 
                             // Email notifikasi (opsional) - Contoh menggunakan 'emailext' plugin
                             emailext (
@@ -46,15 +40,15 @@ pipeline {
                 success {
                     script {
                         // Email notifikasi (opsional) - Contoh menggunakan 'emailext' plugin
-                        emailext (
-                            subject: "Jenkins Build Berhasil",
-                            body: "Build Jenkins Anda berhasil.",
-                            to: "ghazylaode002@gmail.com"
-                        )
+           emailext (
+    subject: "Jenkins Build Berhasil",
+    body: "Build Jenkins Anda berhasil.",
+    to: "ghazylaode002@gmail.com"
+)
+
                     }
                 }
             }
         }
     }
 }
-
