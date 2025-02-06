@@ -43,7 +43,7 @@ pipeline {
            emailext (
     subject: "Jenkins Build Berhasil",
     body: "Build Jenkins Anda berhasil.",
-    to: "ghazylaode.002@gmail.com"
+    to: "ghazylaode002@gmail.com"
 )
 
                     }
